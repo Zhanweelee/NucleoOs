@@ -54,6 +54,10 @@ int nucleo_tts_plan(const char *text, const char *lang,
 // to build_voice.py's slugify(). Used for the "whole fixed answer -> single clip" lookup (greetings,
 // "non lo so", pairing...): so they play with natural prosody, beyond the planner's 6-word limit.
 void nucleo_tts_full_slug(const char *text, char *out, int cap);
+// Slug for a whole zh utterance (UTF-8 codepoints -> u4e2d style); see build_voice.py slugify_zh.
+void nucleo_tts_full_slug_zh(const char *text, char *out, int cap);
+// True when >=75% of non-space characters are ASCII letters/digits (ANIMA IT/EN reply on zh UI).
+bool nucleo_tts_text_mostly_latin(const char *text);
 
 // Content guard (OFFLINE): true only if `text` makes SENSE to speak aloud. False if it's
 // too long (> max_chars, 0 = no limit) or "looks like code"/markup (backticks, braces, tags,

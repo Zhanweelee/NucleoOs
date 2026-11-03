@@ -54,6 +54,35 @@ def cardinal_en(n):
     t, u = n // 10, n % 10
     return EN_TENS[t] + ("-" + EN_U[u] if u else "")    # twenty-three
 
+# ---- Mandarin cardinals (spoken clips n0..n99) -----------------------------------------------
+ZH_U = ["零","一","二","三","四","五","六","七","八","九"]
+ZH_T = ["十","十一","十二","十三","十四","十五","十六","十七","十八","十九"]
+ZH_TENS = ["","","二十","三十","四十","五十","六十","七十","八十","九十"]
+
+def cardinal_zh(n):
+    if n < 10: return ZH_U[n]
+    if n < 20: return ZH_T[n - 10]
+    t, u = n // 10, n % 10
+    return ZH_TENS[t] + (ZH_U[u] if u else "")
+
+def slugify_zh(text):
+    # MUST match nucleo_tts_plan.c (u<hex> per non-ASCII codepoint; ASCII alnum like slugify).
+    out, prev = [], False
+    for ch in text:
+        o = ord(ch)
+        if ch.isascii() and ch.isalnum():
+            out.append(ch.lower()); prev = False
+        elif o > 0x7F:
+            seg = "u%x" % o
+            if out and not prev: out.append("_"); prev = True
+            out.append(seg); prev = False
+        elif not prev and out:
+            out.append("_"); prev = True
+    return "".join(out).strip("_")
+
+def sanitize_text_zh(t):
+    return re.sub(r"\s+", " ", t).strip()
+
 # ---- letter names (to spell out acronyms: USB -> "u esse bi") -----------------------
 # slug lett_<a..z>; the text is HOW the letter is pronounced in the language (Edge says it naturally).
 IT_LETT = {"a":"a","b":"bi","c":"ci","d":"di","e":"e","f":"effe","g":"gi","h":"acca","i":"i",
@@ -66,6 +95,15 @@ EN_LETT = {"a":"ay","b":"bee","c":"see","d":"dee","e":"ee","f":"ef","g":"gee","h
 # ---- mandatory pack per language --------------------------------------------------------
 def mandatory(lang):
     m = {}
+    if lang == "zh":
+        for n in range(100): m["n%d" % n] = cardinal_zh(n)
+        m["bai"] = "百"; m["qian"] = "千"; m["dian"] = "点"; m["fu"] = "负"
+        m["read_it"] = "我没法用语音说这个，请在屏幕上阅读。"
+        m["xianzai_shi"] = "现在是"
+        m["dian_z"] = "点"
+        m["fen"] = "分"
+        m["zheng"] = "整"
+        return m
     if lang == "en":
         for n in range(100): m["n%d" % n] = cardinal_en(n)
         m["hundred"]="hundred"; m["thousand"]="thousand"; m["million"]="million"
@@ -109,11 +147,15 @@ def read_lines(path, col0_only):
             line = line.rstrip("\n")
             if not line.strip() or line.lstrip().startswith("#"): continue
             if col0_only:
-                raw = line.split("\t", 1)[0].strip(); slug = slugify(raw); text = sanitize_text(raw)
+                raw = line.split("\t", 1)[0].strip()
+                slug = slugify_zh(raw) if lang == "zh" else slugify(raw)
+                text = sanitize_text_zh(raw) if lang == "zh" else sanitize_text(raw)
             elif "\t" in line:
                 a, b = line.split("\t", 1); slug = a.strip(); text = sanitize_text(b)
             else:
-                raw = line.strip(); slug = slugify(raw); text = sanitize_text(raw)
+                raw = line.strip()
+                slug = slugify_zh(raw) if lang == "zh" else slugify(raw)
+                text = sanitize_text_zh(raw) if lang == "zh" else sanitize_text(raw)
             if slug and text and slug not in m: m[slug] = text
     return m
 

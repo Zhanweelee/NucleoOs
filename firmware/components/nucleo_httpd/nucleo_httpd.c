@@ -1629,7 +1629,9 @@ static esp_err_t anima_get(httpd_req_t *req)
         char value[640]; snprintf(value, sizeof(value), "%s", en ? "unavailable" : "non disponibile");
         if (!strcmp(r.arg, "time")) {
             time_t now = time(NULL); struct tm *tm = localtime(&now);
-            if (tm && now > 1672531200) nucleo_tts_speak_time(value, (int)sizeof(value), tm->tm_hour, tm->tm_min, en ? "en" : "it");
+            const char *lc = nucleo_i18n_lang();
+            const char *tl = (lc[0] == 'z' && lc[1] == 'h') ? "zh" : (en ? "en" : "it");
+            if (tm && now > 1672531200) nucleo_tts_speak_time(value, (int)sizeof(value), tm->tm_hour, tm->tm_min, tl);
             else snprintf(value, sizeof(value), "%s", en ? "I don't know the time: the clock isn't set" : "Non conosco l'ora: l'orologio non e' impostato");
         } else if (!strcmp(r.arg, "storage")) {
             nucleo_storage_refresh();

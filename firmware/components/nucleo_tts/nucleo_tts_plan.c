@@ -142,7 +142,7 @@ static int lex_units(const char *a, unit_t *u, int max)
 }
 
 // ---- token emission --------------------------------------------------------------------------
-typedef struct { tts_token_t *out; int max; int n; bool en; } sink_t;
+typedef struct { tts_token_t *out; int max; int n; bool en; bool zh; } sink_t;
 
 static void push_clip(sink_t *s, const char *slug, bool fb)
 {
@@ -212,23 +212,46 @@ static void emit_int_en(sink_t *s, long v)
     emit_big_digits(s, v);
 }
 
+static void emit_int_zh(sink_t *s, long v);
+
 // NUMBER unit ("-?digits(,digits)?") -> clip. Sign -> "meno"/"minus"; decimal -> "virgola"/"point"
 // + digits. The language (s->en) picks the cardinals and connectors.
 static void emit_number(sink_t *s, const char *str)
 {
     const char *p = str;
-    if (*p == '-') { push_clip(s, s->en ? "minus" : "meno", false); p++; }
+    if (*p == '-') {
+        if (s->zh) push_clip(s, "fu", false);
+        else push_clip(s, s->en ? "minus" : "meno", false);
+        p++;
+    }
     long ip = 0; int ndig = 0;
     while (*p && *p != ',' && ndig < 12) { if (*p >= '0' && *p <= '9') { ip = ip * 10 + (*p - '0'); ndig++; } p++; }
     if (ndig > 6) {                                  // too large for the value: digit-by-digit
         const char *q = str; if (*q == '-') q++;
         for (; *q && *q != ','; q++) if (*q >= '0' && *q <= '9') push_num(s, *q - '0', true);
-    } else if (s->en) emit_int_en(s, ip);
+    } else if (s->zh) emit_int_zh(s, ip);
+    else if (s->en) emit_int_en(s, ip);
     else              emit_int_it(s, ip);
-    if (*p == ',') {                                 // decimal part: "virgola"/"point" then digits
-        push_clip(s, s->en ? "point" : "virgola", false);
+    if (*p == ',') {                                 // decimal part
+        if (s->zh) push_clip(s, "dian", false);
+        else push_clip(s, s->en ? "point" : "virgola", false);
         for (p++; *p; p++) if (*p >= '0' && *p <= '9') push_num(s, *p - '0', false);
     }
+}
+
+// Integer -> Mandarin cardinal (0..99 atomic clips n0..n99; bai/qian composition above that).
+static void emit_int_zh(sink_t *s, long v)
+{
+    if (v < 0) { push_clip(s, "fu", false); v = -v; }
+    if (v < 100)     { push_num(s, (int)v, false); return; }
+    if (v < 1000)    { int h = (int)(v / 100), r = (int)(v % 100);
+                       if (h > 1) push_num(s, h, false);
+                       push_clip(s, "bai", false);
+                       if (r) emit_int_zh(s, r); return; }
+    if (v < 1000000) { int th = (int)(v / 1000), r = (int)(v % 1000);
+                       emit_int_zh(s, th); push_clip(s, "qian", false);
+                       if (r) emit_int_zh(s, r); return; }
+    emit_big_digits(s, v);
 }
 
 // Unknown word (no clip): emits an UNKNOWN token, keeping the WORD (for diagnostics:
@@ -360,6 +383,13 @@ void nucleo_tts_speak_time(char *out, int n, int h, int m, const char *lang)
     out[0] = 0;
     if (h < 0 || h > 23 || m < 0 || m > 59) return;
     bool en = lang && lang[0] == 'e' && lang[1] == 'n';
+    bool zh = lang && lang[0] == 'z' && lang[1] == 'h';
+
+    if (zh) {
+        if (m == 0) snprintf(out, n, "现在是 %d 点整", h);
+        else        snprintf(out, n, "现在是 %d 点 %d 分", h, m);
+        return;
+    }
 
     if (en) {
         if (m == 0) {
@@ -559,12 +589,142 @@ void nucleo_tts_first_sentence(const char *in, char *out, int n)
     out[o] = 0;
 }
 
+// ---- Mandarin (zh): UTF-8 codepoint slugs u4f2f (must match build_voice.py slugify_zh) -----------
+static int utf8_cp(const char *s, int i, uint32_t *cp)
+{
+    if (!s[i]) { *cp = 0; return 0; }
+    unsigned char c = (unsigned char)s[i];
+    if (c < 0x80) { *cp = c; return 1; }
+    if ((c & 0xE0) == 0xC0 && s[i + 1]) { *cp = ((c & 0x1F) << 6) | (s[i + 1] & 0x3F); return 2; }
+    if ((c & 0xF0) == 0xE0 && s[i + 1] && s[i + 2]) {
+        *cp = ((c & 0x0F) << 12) | ((s[i + 1] & 0x3F) << 6) | (s[i + 2] & 0x3F); return 3;
+    }
+    if ((c & 0xF8) == 0xF0 && s[i + 1] && s[i + 2] && s[i + 3]) {
+        *cp = ((c & 0x07) << 18) | ((s[i + 1] & 0x3F) << 12) | ((s[i + 2] & 0x3F) << 6) | (s[i + 3] & 0x3F);
+        return 4;
+    }
+    *cp = 0; return 1;
+}
+
+static bool cp_is_cjk(uint32_t cp)
+{
+    return (cp >= 0x4E00 && cp <= 0x9FFF) || (cp >= 0x3400 && cp <= 0x4DBF)
+        || (cp >= 0x3000 && cp <= 0x303F) || (cp >= 0xFF00 && cp <= 0xFFEF);
+}
+
+static void cp_slug(uint32_t cp, char *out, int cap)
+{
+    if (!out || cap <= 0) return;
+    snprintf(out, (size_t)cap, "u%x", cp);
+}
+
+void nucleo_tts_full_slug_zh(const char *text, char *out, int cap)
+{
+    if (!out || cap <= 0) return;
+    out[0] = 0;
+    if (!text) return;
+    int o = 0, i = 0;
+    bool us = false;
+    while (text[i] && o < cap - 1) {
+        uint32_t cp; int adv = utf8_cp(text, i, &cp);
+        if (!adv) break;
+        i += adv;
+        if (cp <= 0x7F && ((cp >= 'a' && cp <= 'z') || (cp >= '0' && cp <= '9'))) {
+            out[o++] = (char)cp; us = false;
+        } else if (cp_is_cjk(cp) || cp > 0x7F) {
+            char sb[16]; cp_slug(cp, sb, sizeof sb);
+            if (o > 0 && !us) { out[o++] = '_'; us = true; }
+            for (int k = 0; sb[k] && o < cap - 1; k++) { out[o++] = sb[k]; us = false; }
+        } else if ((cp >= 'A' && cp <= 'Z')) {
+            if (o > 0 && !us) { out[o++] = '_'; us = true; }
+            out[o++] = (char)(cp + 32); us = false;
+        } else if (!us && o > 0) { out[o++] = '_'; us = true; }
+    }
+    while (o > 0 && out[o - 1] == '_') o--;
+    out[o] = 0;
+}
+
+static bool text_mostly_latin(const char *text)
+{
+    int lat = 0, other = 0;
+    for (int i = 0; text[i]; ) {
+        uint32_t cp; int adv = utf8_cp(text, i, &cp);
+        if (!adv) break;
+        i += adv;
+        if (cp == ' ' || cp == '\t' || cp == '\n') continue;
+        if (cp <= 0x7F && ((cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z') || (cp >= '0' && cp <= '9')))
+            lat++;
+        else other++;
+    }
+    return (lat + other) > 0 && lat * 100 / (lat + other) >= 75;
+}
+
+bool nucleo_tts_text_mostly_latin(const char *text) { return text && text_mostly_latin(text); }
+
+static int plan_zh(const char *text, tts_has_clip_fn has_clip, void *ud, tts_token_t *out, int max)
+{
+    sink_t s = { out, max, 0, false, true };
+    int i = 0;
+    while (text[i] && s.n < max) {
+        uint32_t cp; int adv = utf8_cp(text, i, &cp);
+        if (!adv) break;
+        if (cp == ' ' || cp == '\t' || cp == '\n') { i += adv; continue; }
+        if (cp == '.' || cp == '!' || cp == '?' || cp == 0x3002 || cp == 0xFF01 || cp == 0xFF1F) {
+            push_pause(&s, 320); i += adv; continue;
+        }
+        if (cp >= '0' && cp <= '9') {
+            char num[24]; int n = 0;
+            while (text[i] && n < (int)sizeof(num) - 1) {
+                uint32_t d; int a2 = utf8_cp(text, i, &d);
+                if (d >= '0' && d <= '9') { num[n++] = (char)d; i += a2; }
+                else if (d == ',' || d == '.') { num[n++] = ','; i += a2; break; }
+                else break;
+            }
+            num[n] = 0;
+            emit_number(&s, num);
+            continue;
+        }
+        // Greedy phrase: up to MAX_PHRASE UTF-8 characters -> slug joined by '_'
+        int start = i, matched = 0;
+        for (int span = MAX_PHRASE; span >= 1; span--) {
+            char slug[48]; int o = 0, pos = start;
+            for (int k = 0; k < span && text[pos]; k++) {
+                uint32_t c2; int a3 = utf8_cp(text, pos, &c2);
+                if (!a3) break;
+                char sb[16]; cp_slug(c2, sb, sizeof sb);
+                if (k > 0) { if (o < (int)sizeof(slug) - 1) slug[o++] = '_'; }
+                for (int t = 0; sb[t] && o < (int)sizeof(slug) - 1; t++) slug[o++] = sb[t];
+                pos += a3;
+            }
+            slug[o] = 0;
+            if (o > 0 && has_clip && has_clip(slug, ud)) {
+                push_clip(&s, slug, false);
+                i = pos;
+                matched = 1;
+                break;
+            }
+        }
+        if (matched) continue;
+        char one[16]; cp_slug(cp, one, sizeof one);
+        if (has_clip && has_clip(one, ud)) { push_clip(&s, one, false); i += adv; continue; }
+        push_unknown(&s, one);
+        i += adv;
+    }
+    return s.n;
+}
+
 // ---- public planner -------------------------------------------------------------------------
 int nucleo_tts_plan(const char *text, const char *lang,
                     tts_has_clip_fn has_clip, void *ud,
                     tts_token_t *out, int max)
 {
     if (!text || !out || max <= 0) return 0;
+    bool is_zh = lang && lang[0] == 'z' && lang[1] == 'h';
+    if (is_zh && text_mostly_latin(text))
+        return nucleo_tts_plan(text, "en", has_clip, ud, out, max);   // ANIMA IT/EN replies on zh UI -> en pool
+    if (is_zh)
+        return plan_zh(text, has_clip, ud, out, max);
+
     bool en = lang && lang[0] == 'e' && lang[1] == 'n';   // "en" -> English, otherwise Italian
 
     char norm[1024];
@@ -573,7 +733,7 @@ int nucleo_tts_plan(const char *text, const char *lang,
     unit_t u[MAX_UNITS];
     int nu = lex_units(norm, u, MAX_UNITS);
 
-    sink_t s = { out, max, 0, en };
+    sink_t s = { out, max, 0, en, false };
     for (int i = 0; i < nu && s.n < max; ) {
         if (u[i].kind == U_PAUSE) { push_pause(&s, u[i].ms); i++; continue; }
         if (u[i].kind == U_NUMBER) { emit_number(&s, u[i].s); i++; continue; }

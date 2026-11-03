@@ -1,0 +1,10 @@
+# Curated Mandarin clips for on-device TTS (slug<TAB>spoken text). Slugs must match nucleo_tts_plan / slugify_zh.
+xianzai_shi	现在是
+dian_z	点
+fen	分
+zheng	整
+read_it	我没法用语音说这个，请在屏幕上阅读。
+opening_music	打开音乐
+done	完成
+error	错误
+clock_not_set	时钟未设置
