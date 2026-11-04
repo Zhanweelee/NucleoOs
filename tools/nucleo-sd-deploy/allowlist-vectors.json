@@ -50,6 +50,7 @@
     "data//atlas.bin": false,
     "data/pinball/pack/readme.txt": false,
     "data/tts/en/clips.pcm": true,
+    "data/tts/zh/index.bin": true,
     "data/tts/speak.cfg": false,
     "data/tts/it/sub/x": false,
     "data/Documents/note.txt": false,

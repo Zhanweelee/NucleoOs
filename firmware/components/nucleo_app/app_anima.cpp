@@ -937,6 +937,14 @@ static int voice_wait(uint32_t max_ms)
     return TK_NONE;
 }
 
+static const char *voice_pack_lang(void)
+{
+    const char *l = nucleo_i18n_lang();
+    if (l[0] == 'z' && l[1] == 'h') return "zh";
+    if (l[0] == 'e' && l[1] == 'n') return "en";
+    return "it";
+}
+
 static void speak_result(const anima_result_t &r, bool en)
 {
     if (!r.reply[0]) return;
@@ -944,7 +952,8 @@ static void speak_result(const anima_result_t &r, bool en)
     // "media-player" id, which isn't covered -> "leggila") and the operation's OUTCOME (-> a "Fatto" confirmation). Nothing here,
     // so the voice doesn't double up or read an id out loud as if it were speech.
     if (r.action == ANIMA_ACT_LAUNCH || r.action == ANIMA_ACT_TOOL) return;
-    const char *lang = en ? "en" : "it";
+    const char *lang = voice_pack_lang();
+    (void)en;
     bool knowledge = r.tier == ANIMA_TIER_FACT || r.tier == ANIMA_TIER_STITCH || r.tier == ANIMA_TIER_REMOTE;
     if (knowledge) {
         if (!nucleo_tts_enabled()) return;   // voice off -> skip the whole loop (no useless WAV-plan attempts)
@@ -1182,7 +1191,7 @@ static void fill_system_value(const char *arg, char *out, size_t n, bool en)
     snprintf(out, n, en ? "not available" : "non disponibile");
     time_t now = time(NULL); struct tm *tm = localtime(&now);
     if (!strcmp(arg, "time")) {
-        if (tm && now > 1672531200) nucleo_tts_speak_time(out, (int)n, tm->tm_hour, tm->tm_min, en ? "en" : "it");
+        if (tm && now > 1672531200) nucleo_tts_speak_time(out, (int)n, tm->tm_hour, tm->tm_min, voice_pack_lang());
         else                        snprintf(out, n, en ? "I don't know the time: the clock isn't set" : "Non conosco l'ora: l'orologio non e' impostato");
     } else if (!strcmp(arg, "storage")) {
         nucleo_storage_refresh();

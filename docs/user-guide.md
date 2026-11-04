@@ -183,9 +183,10 @@ What you can do:
   or battery, do math and unit conversions.
 - **Ask it questions** — it answers from its on-device knowledge; when it doesn't know, it says so
   honestly rather than guessing.
-- **It can speak** — a bilingual (IT/EN) offline voice reads suitable answers aloud (time, launch
-  confirmations, status) and says "read it on screen" for anything it shouldn't voice. See
-  [`tts.md`](tts.md).
+- **It can speak** — offline voice packs for **Italian, English, and Simplified Chinese** (UI language
+  `zh`) read suitable answers aloud; Latin IT/EN ANIMA replies on a zh UI still use the English clip bank.
+  Anything too long or unknown triggers a localized "read it on screen" phrase. Browser read-aloud uses
+  `speechSynthesis` with `zh-CN` when the OS language is `zh`. See [`tts.md`](tts.md) and [`voice.md`](voice.md).
 - **On the Cardputer**, open **ANIMA** from Home. In **NucleoOS Web**, use the ANIMA app or summon
   the OS-wide copilot with **`Ctrl`/`⌘ + Space`**.
 - **When online**, ANIMA can reach structured web knowledge and, if you configure an API key,
@@ -198,10 +199,11 @@ train them in the Voice Manager app. See [`voice.md`](voice.md).
 
 ## 7. Languages
 
-The OS UI ships in **five languages: Italian, English, German, Spanish, French** (it · en · de · es
-· fr). Change it in **Settings ▸ language** on the device, or in the web Settings. The choice is
-system-wide — the shell, apps, launcher search and voice all follow it. (ANIMA's offline knowledge
-engine understands Italian and English.) See [`i18n.md`](i18n.md).
+The OS UI ships in **six languages: Italian, English, Spanish, French, German, Simplified Chinese**
+(`it` · `en` · `es` · `fr` · `de` · `zh`). Change it in **Settings ▸ language** on the device, or in the
+web Settings. The choice is system-wide — the shell, apps, launcher search and voice all follow it. (ANIMA's
+offline knowledge engine understands Italian and English; **zh** adds Vosk dictation + optional zh TTS pack.)
+See [`i18n.md`](i18n.md).
 
 ---
 

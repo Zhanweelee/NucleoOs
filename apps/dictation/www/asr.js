@@ -25,6 +25,7 @@ const VOSK_CDN = 'https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js';
 const MODELS = {
   it: { local: '/apps/anima/vosk/models/vosk-model-small-it-0.4.tar.gz',    cdn: 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-it-0.4.tar.gz' },
   en: { local: '/apps/anima/vosk/models/vosk-model-small-en-us-0.15.tar.gz', cdn: 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz' },
+  zh: { local: '/apps/anima/vosk/models/vosk-model-small-cn-0.22.tar.gz',   cdn: 'https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip' },
 };
 
 function inject(src) {
@@ -81,7 +82,7 @@ export function createASR() {
   // back to the SD copy (whole file, then split parts) served by the Cardputer.
   async function getModel(Vosk, lang) {
     if (_modelCache[lang]) return _modelCache[lang];
-    const m = MODELS[lang] || MODELS.it;
+    const m = MODELS[lang] || MODELS.en;
     const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
     const fromCdn = async () => { const mod = await Vosk.createModel(m.cdn); a.source = 'online'; return mod; };
     const fromSdWhole = async () => { const mod = await withTimeout(Vosk.createModel(m.local), 12000); a.source = 'sd'; return mod; };

@@ -32,11 +32,12 @@ const WORKLET   = './vosk/recognizer-processor.js';
 const MODELS    = {
   it: { local: './vosk/models/vosk-model-small-it-0.4.tar.gz',    cdn: 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-it-0.4.tar.gz' },
   en: { local: './vosk/models/vosk-model-small-en-us-0.15.tar.gz', cdn: 'https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-en-us-0.15.tar.gz' },
+  zh: { local: './vosk/models/vosk-model-small-cn-0.22.tar.gz',   cdn: 'https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip' },
 };
-// BCP-47 for the Web Speech recognizer, one row per OS language. Web Speech understands all five —
+// BCP-47 for the Web Speech recognizer, one row per OS language. Web Speech understands all six —
 // so for the languages Vosk has no model for, it is not a "fallback", it is the CORRECT engine.
-const SPEECH_LOCALES = { it: 'it-IT', en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE' };
-// Vosk ships it/en only (~34 MB each on the SD). Asking it for Spanish used to hand it the ITALIAN
+const SPEECH_LOCALES = { it: 'it-IT', en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', zh: 'zh-CN' };
+// Vosk ships it/en/zh (~34–42 MB each on the SD). Asking it for Spanish used to hand it the ITALIAN
 // model — it happily returned confident nonsense. Anything without a model routes to Web Speech.
 const hasVoskModel = (lang) => Object.prototype.hasOwnProperty.call(MODELS, lang);
 

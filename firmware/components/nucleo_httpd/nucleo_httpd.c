@@ -1486,7 +1486,7 @@ static esp_err_t anima_get(httpd_req_t *req)
         // es/fr/de user gets an online answer in their own language. Unknown codes keep the OS default.
         if (httpd_query_key_value(query, "lang", lv, sizeof(lv)) == ESP_OK && lv[0] && lv[1]) {
             char a = (char)(lv[0] | 0x20), b = (char)(lv[1] | 0x20);
-            static const char *ok[] = { "it", "en", "es", "fr", "de" };
+            static const char *ok[] = { "it", "en", "es", "fr", "de", "zh" };
             for (size_t i = 0; i < sizeof(ok) / sizeof(ok[0]); i++)
                 if (a == ok[i][0] && b == ok[i][1]) { lang[0] = a; lang[1] = b; lang[2] = 0; break; }
         }
@@ -1629,7 +1629,9 @@ static esp_err_t anima_get(httpd_req_t *req)
         char value[640]; snprintf(value, sizeof(value), "%s", en ? "unavailable" : "non disponibile");
         if (!strcmp(r.arg, "time")) {
             time_t now = time(NULL); struct tm *tm = localtime(&now);
-            if (tm && now > 1672531200) nucleo_tts_speak_time(value, (int)sizeof(value), tm->tm_hour, tm->tm_min, en ? "en" : "it");
+            const char *lc = nucleo_i18n_lang();
+            const char *tl = (lc[0] == 'z' && lc[1] == 'h') ? "zh" : (en ? "en" : "it");
+            if (tm && now > 1672531200) nucleo_tts_speak_time(value, (int)sizeof(value), tm->tm_hour, tm->tm_min, tl);
             else snprintf(value, sizeof(value), "%s", en ? "I don't know the time: the clock isn't set" : "Non conosco l'ora: l'orologio non e' impostato");
         } else if (!strcmp(r.arg, "storage")) {
             nucleo_storage_refresh();

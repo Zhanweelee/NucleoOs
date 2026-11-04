@@ -616,7 +616,8 @@ async function toggleVoice() {
   inputEl.placeholder = T().micListening;
   // One status probe per session: whether the device's own voice is on (spoken replies).
   if (!ttsInfo) fetch('/api/tts', { cache: 'no-store' }).then((r) => r.json()).then((j) => { ttsInfo = j || {}; }).catch(() => { ttsInfo = {}; });
-  const vlang = (lang() === 'it' || lang() === 'en') ? lang() : 'en';   // the two shipped Vosk models
+  const l = lang();
+  const vlang = (l === 'it' || l === 'en' || l === 'zh') ? l : 'en';   // offline Vosk models on SD / CDN
   a.start(vlang, {
     onpartial(t) { if (voiceOn && t) { inputEl.value = t; autogrow(); } },
     onfinal(t) {
@@ -677,9 +678,10 @@ async function verifyReplyClaims(reply, turn) {
 // and clipped hard: the TTS body caps at 1 KB and nobody wants a read-aloud essay.
 function maybeSpeak(reply) {
   if (!ttsInfo || !ttsInfo.enabled || !ttsInfo.available) return;
-  const l = (lang() === 'it' || lang() === 'en') ? lang() : 'en';
+  const l = lang();
+  const sayLang = (l === 'it' || l === 'en' || l === 'zh') ? l : 'en';
   const say = String(reply || '').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 280);
-  if (say) fetch('/api/tts', { method: 'POST', body: JSON.stringify({ say, lang: l }) }).catch(() => {});
+  if (say) fetch('/api/tts', { method: 'POST', body: JSON.stringify({ say, lang: sayLang }) }).catch(() => {});
 }
 
 // ---- open / close ----

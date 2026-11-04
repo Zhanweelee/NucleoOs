@@ -284,17 +284,23 @@ static bool say_impl(const char *text, const char *lang, const char *fallback, b
     if (!nucleo_tts_text_speakable(text, TTS_MAX_CHARS))
         return (fallback && fallback[0]) ? say_impl(fallback, l, NULL, false) : (quiet ? false : say_one_clip(l, "read_it"));
 
-    char p[64]; idx_path(p, sizeof p, l);
+    const char *pack = l;
+    if (l[0] == 'z' && l[1] == 'h' && nucleo_tts_text_mostly_latin(text)) pack = "en";
+
+    char p[64]; idx_path(p, sizeof p, pack);
     tts_index_t ix;
     if (!tts_index_open(&ix, p)) { ESP_LOGW(TAG, "voce %s non installata", l); return false; }
 
     // Whole FIXED answer (greetings, "non lo so", pairing...): if the entire text is a single clip,
     // play it (natural prosody, beyond the planner's 6-word phrase-match limit).
     char full[TTS_IDX_SLUG]; uint32_t foff, flen;
-    nucleo_tts_full_slug(text, full, sizeof full);
+    if (l[0] == 'z' && l[1] == 'h' && !nucleo_tts_text_mostly_latin(text))
+        nucleo_tts_full_slug_zh(text, full, sizeof full);
+    else
+        nucleo_tts_full_slug(text, full, sizeof full);
     if (full[0] && tts_index_find(&ix, full, &foff, &flen)) {
         tts_index_close(&ix);             // it's a single clip: delegates to the memoized (cacheable) path
-        return say_one_clip(l, full);
+        return say_one_clip(pack, full);
     }
 
     // TOK_MAX == MAX_UNITS (160): holds all the tokens of an utterance <=220 chars; ~9.6KB heap, freed right after render.
@@ -341,7 +347,7 @@ static bool say_impl(const char *text, const char *lang, const char *fallback, b
     }
     if (unknown > 0)                                      // 1..TTS_MAX_SKIP uncovered: tolerated, speak the rest
         ESP_LOGI(TAG, "\"%s\": %d parola/e scoperta/e saltata/e [%s], pronuncio la parte coperta", text, unknown, miss);
-    bool r = render(l, tok, n, &ix, OUT_PATH);   // variable sentence: not memoizable -> scratch file
+    bool r = render(pack, tok, n, &ix, OUT_PATH);   // variable sentence: not memoizable -> scratch file
     free(tok);
     tts_index_close(&ix);
     return r;

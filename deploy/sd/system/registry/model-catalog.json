@@ -61,6 +61,22 @@
       "components": [ { "role": "model", "file": "vosk-model-small-en-us-0.15.tar.gz" } ],
       "chunkBytes": 7340032,
       "note": "Already on SD; shown for status only."
+    },
+    {
+      "id": "vosk-zh-0.22",
+      "name": "Vosk · 语音识别 (ZH)",
+      "kind": "asr",
+      "family": "vosk",
+      "purpose": "Offline voice dictation (Mandarin Chinese, zh-CN).",
+      "consumer": "anima/dictation",
+      "license": "apache-2.0",
+      "bundled": false,
+      "sizeBytes": 42000000,
+      "sdDir": "/apps/anima/www/vosk/models",
+      "components": [ { "role": "model", "file": "vosk-model-small-cn-0.22.tar.gz" } ],
+      "chunkBytes": 7340032,
+      "cdn": { "baseUrl": "https://alphacephei.com/vosk/models" },
+      "note": "Not bundled (≈42 MB). Run node tools/anima/fetch-vosk-zh.mjs on a PC, or download vosk-model-small-cn-0.22 and repack as .tar.gz for SD. Browser online-first load uses the official .zip (converted by vosk-browser when possible) or SD copy."
     }
   ]
 }

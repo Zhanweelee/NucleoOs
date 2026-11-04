@@ -21,9 +21,9 @@ The device speaks ONLY the **on-device** answers that make sense to say aloud:
   online answers).
 
 ## Firmware architecture (`firmware/components/nucleo_tts`)
-- `nucleo_tts_plan.c` (PURE, testable): IT/EN text → `CLIP`/`PAUSE`/`UNKNOWN` tokens. Expands numbers
-  into per-language cardinals (IT with elision: *ventitré*, *millenovecento…*; EN *twenty-three*), **greedy
-  phrase** matching (common phrases win over single words), `nucleo_tts_text_speakable()` (content
+- `nucleo_tts_plan.c` (PURE, testable): IT/EN/**zh** text → `CLIP`/`PAUSE`/`UNKNOWN` tokens. Expands numbers
+  into per-language cardinals (IT with elision: *ventitré*, *millenovecento…*; EN *twenty-three*; **zh**
+  *n0..n99* + *bai/qian* composition), **greedy phrase** matching (common phrases win over single words), `nucleo_tts_text_speakable()` (content
   guard) and `nucleo_tts_full_slug()` (slug of the whole text, == the pipeline's `slugify`).
   - `nucleo_tts_speak_time(h, m, lang)` (PURE): composes the TIME into a **speakable phrase exact to the
     minute** made only of clips in the pack — IT *"Sono le 9 e 30" / "…in punto" / "…e un quarto" /
@@ -75,7 +75,9 @@ is **streamed** (fixed 1KB buffer), no large resident structure → the TTS adds
 
 ## Pipeline (PC, `tools/nucleo-tts/`)
 - **Engine:** `gen_edge.py` — **Edge-TTS** (Microsoft neural voices, free, online only during generation;
-  IT=Elsa / EN=Aria), **24 kHz**, **silence trim** at the edges + loudnorm. Async/concurrent/resumable.
+  IT=Elsa / EN=Aria / **ZH=Xiaoxiao**), **24 kHz**, **silence trim** at the edges + loudnorm. Async/concurrent/resumable.
+  **zh pack:** run `tools/nucleo-tts/gen_zh_pack.ps1` (mandatory + `lexicon.zh.txt`; full dictionary optional).
+  Expect **~100–400 MB** on SD depending on vocabulary — use `oversized-assets/` + `sd-sync` like IT/EN, not git.
   **Local/offline** alternative: `build_voice.py` (piper/espeak/pico engine) — the fallback if a 100%
   offline generation is needed.
 - **Vocabulary (shared module `build_voice.py`):** four layers, deduplicated: the mandatory pack

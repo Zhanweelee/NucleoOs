@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 const PART = 7 * 1024 * 1024;                  // 7 MiB — safely under the device's ~8 MB write/read window
-const MODELS = ['vosk-model-small-it-0.4.tar.gz', 'vosk-model-small-en-us-0.15.tar.gz'];
+const MODELS = ['vosk-model-small-it-0.4.tar.gz', 'vosk-model-small-en-us-0.15.tar.gz', 'vosk-model-small-cn-0.22.tar.gz'];
 
 const [src, ...dests] = process.argv.slice(2);
 if (!src || !dests.length) { console.error('usage: split-vosk-models.mjs <srcDir> <destDir...>'); process.exit(1); }

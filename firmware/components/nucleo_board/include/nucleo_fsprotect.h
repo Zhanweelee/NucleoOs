@@ -127,6 +127,7 @@ static inline bool nucleo_fs_is_protected(const char *abs)
     if (nucleo_fs__seg(rel, "data/tts")) {
         if (nucleo_fs__seg(rel, "data/tts/it")) return true;
         if (nucleo_fs__seg(rel, "data/tts/en")) return true;
+        if (nucleo_fs__seg(rel, "data/tts/zh")) return true;
         return false;
     }
 

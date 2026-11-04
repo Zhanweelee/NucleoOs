@@ -104,3 +104,22 @@ Manager web app.
 the math (FFT, mel, MFCC, CMN gain-robustness, rate invariance, DTW
 discrimination, EMA, rejection) — 10/10. It does **not** prove real-voice
 recognition rate; that is the on-device test.
+
+## Browser speech-to-text (ANIMA, Dictation, Copilot mic)
+
+This is **separate** from AVCEB push-to-talk on the MCU:
+
+| OS language | Offline (Vosk WASM) | Online fallback |
+|-------------|---------------------|-----------------|
+| `it`, `en`, `zh` | Language-specific small model (~34–42 MB) — SD copy or CDN | Web Speech where Vosk is unavailable |
+| `es`, `fr`, `de` | — (no Vosk model) | Web Speech (`speechSynthesis` / `SpeechRecognition`) |
+
+**Chinese (`zh`):** model id `vosk-model-small-cn-0.22`. It is **not** bundled in git. Provision with
+`node tools/anima/fetch-vosk-zh.mjs` (zip → tar.gz) and optional
+`node tools/anima/split-vosk-models.mjs` for &lt;8 MB SD parts. Catalog entry: `registry/model-catalog.json`
+(`vosk-zh-0.22`). The Cardputer mic path (`/api/rec/stream` → browser Vosk) follows the same model map as
+the browser mic in `apps/anima/www/voice.js` and `apps/dictation/www/asr.js`.
+
+**Limitations:** no Mandarin keyword engine on the ESP32 (AVCEB remains Latin-trained). Offline ANIMA NLU
+stays IT/EN; zh STT transcribes what you say, but command routing still expects Italian/English phrasing
+unless the online teacher is used.
