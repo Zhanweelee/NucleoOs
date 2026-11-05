@@ -62,6 +62,13 @@ export const PROVIDERS = {
     // gemini-2.5-flash-lite (cheap, weak — fine for quick lookups, NOT for careful code).
     models: [['gemini-2.5-flash', 'Gemini 2.5 Flash · consigliato', 'Gemini 2.5 Flash · recommended', 'Gemini 2.5 Flash · recomendado', 'Gemini 2.5 Flash · recommandé', 'Gemini 2.5 Flash · empfohlen', 'Gemini 2.5 Flash · 推荐'], ['gemini-flash-latest', 'Gemini Flash · ultimo', 'Gemini Flash · latest', 'Gemini Flash · último', 'Gemini Flash · dernier', 'Gemini Flash · neueste', 'Gemini Flash · 最新'], ['gemini-2.5-pro', 'Gemini 2.5 Pro · qualità (a pagamento)', 'Gemini 2.5 Pro · quality (paid)', 'Gemini 2.5 Pro · calidad (de pago)', 'Gemini 2.5 Pro · qualité (payant)', 'Gemini 2.5 Pro · Qualität (kostenpflichtig)', 'Gemini 2.5 Pro · 高质量（付费）'], ['gemini-2.5-flash-lite', 'Gemini 2.5 Flash-Lite · economico', 'Gemini 2.5 Flash-Lite · cheap', 'Gemini 2.5 Flash-Lite · económico', 'Gemini 2.5 Flash-Lite · économique', 'Gemini 2.5 Flash-Lite · günstig', 'Gemini 2.5 Flash-Lite · 经济']],
   },
+  // Third-party / self-hosted HTTPS OpenAI-compatible APIs (OpenRouter, Together, a public Ollama tunnel…).
+  // Routed through /api/llm (no browser CORS). Saved in teacher.json as provider "custom"; firmware uses the
+  // OpenAI-compatible wire with the configured base URL (same file ANIMA reads after reboot).
+  custom: {
+    label: 'Custom', base: 'https://api.openai.com/v1', version: '', custom: true, proxy: true,
+    prefix: /.*/, ph: 'sk-…', def: '', models: [],
+  },
 };
 // A model server on the LAN: Ollama (:11434), LM Studio (:1234), llama.cpp / LocalAI (:8080), any
 // OpenAI-compatible endpoint. No CORS and plain HTTP, so the browser reaches it through the device
@@ -115,6 +122,7 @@ export const CAPMATRIX = {
   openai:    { chat: true, image: false, whisper: true,  audioLLM: false, toolUse: true, ir: true },   // Groq
   xai:       { chat: true, image: true,  whisper: false, audioLLM: false, toolUse: true, ir: true },
   google:    { chat: true, image: false, whisper: false, audioLLM: true,  toolUse: true, ir: true },
+  custom:    { chat: true, image: false, whisper: false, audioLLM: false, toolUse: true, ir: true },
   local:     { chat: true, image: false, whisper: false, audioLLM: false, toolUse: true, ir: true },
 };
 // Per-provider quality tiers, mapped to REAL ids from PROVIDERS.models (validated against the registry
@@ -229,6 +237,20 @@ export const isLanUrl = (u) => {
   const o = h.split('.').map(Number);
   return o.length === 4 && o.every((x) => x >= 0 && x <= 255) &&
     (o[0] === 10 || o[0] === 127 || (o[0] === 192 && o[1] === 168) || (o[0] === 172 && o[1] >= 16 && o[1] <= 31) || (o[0] === 169 && o[1] === 254));
+};
+// Providers with a user-typed base URL in Settings / onboarding (LAN server vs HTTPS custom endpoint).
+export const hasEndpointFields = (p) => !!(p && (p.local || p.custom));
+export const normalizeApiBase = (u) => String(u || '').trim().replace(/\/+$/, '');
+const KNOWN_CLOUD_BASE = /anthropic\.com|groq\.com|generativelanguage|x\.ai|api\.openai\.com/i;
+export const isKnownCloudBase = (base) => KNOWN_CLOUD_BASE.test(String(base || ''));
+// HTTPS OpenAI-compatible base for the "custom" provider (plain http on the LAN uses the local provider).
+export const isHttpsApiBase = (u) => {
+  try {
+    const url = new URL(normalizeApiBase(u));
+    if (url.protocol !== 'https:') return false;
+    if (isLanUrl(u)) return false;
+    return true;
+  } catch { return false; }
 };
 
 // ── the ONE cloud wire ──────────────────────────────────────────────────────────────────────────────
@@ -768,7 +790,12 @@ async function _readTeacher() {
     if (!r.ok) return null;
     let j = JSON.parse(await r.text()) || {};
     if (pub) { j = fromPublic(j); _sealed = true; }
-    const provider = (j.provider && PROVIDERS[j.provider]) ? j.provider : (isLanUrl(j.base) ? 'local' : (j.base && /anthropic/.test(j.base) ? 'anthropic' : (j.base && /generativelanguage/.test(j.base) ? 'google' : (j.base && /x\.ai/.test(j.base) ? 'xai' : (j.key ? 'openai' : 'anthropic')))));
+    const provider = (j.provider && PROVIDERS[j.provider]) ? j.provider : (isLanUrl(j.base) ? 'local'
+      : (j.base && /anthropic/.test(j.base) ? 'anthropic'
+      : (j.base && /generativelanguage/.test(j.base) ? 'google'
+      : (j.base && /x\.ai/.test(j.base) ? 'xai'
+      : (j.base && isHttpsApiBase(j.base) && !isKnownCloudBase(j.base) ? 'custom'
+      : (j.key ? 'openai' : 'anthropic'))))));
     const p = providerOf(provider);
     const cfg = { provider, base: j.base || p.base, model: j.model || p.def, key: j.key || '', keyHint: j.keyHint || '', version: j.version || p.version, exec: j.exec || 'browser', keys: j.keys || {}, geminiTier: j.geminiTier || '', stt_url: j.stt_url || '', stt_model: j.stt_model || '', vision_model: j.vision_model || '', vision_base: j.vision_base || '', vision_key: j.vision_key || '', vision: typeof j.vision === 'boolean' ? j.vision : null,
       effort: EFFORTS.includes(j.effort) ? j.effort : '', _extra: unknownFields(j) };

@@ -400,7 +400,7 @@ export async function ensureOnboarding(opts = {}) {
 
 function runWizard(acc = null, accountOnly = false) {
   return new Promise((resolve) => {
-    const state = { step: 0, provider: 'anthropic', model: AI.PROVIDERS.anthropic.def, key: '', exec: 'browser', many: false };
+    const state = { step: 0, provider: 'anthropic', model: AI.PROVIDERS.anthropic.def, base: '', key: '', exec: 'browser', many: false };
     const STEPS = accountOnly ? ['account'] : acc ? ['language', 'account', 'welcome', 'apps', 'install', 'provider', 'key'] : ['language', 'welcome', 'apps', 'install', 'provider', 'key'];
     const P = (k) => (APPS[lang()] || APPS.en)[k];
     const nextAfterAccount = () => { if (accountOnly) done(); else { state.step++; render(); } };
@@ -572,6 +572,7 @@ function runWizard(acc = null, accountOnly = false) {
           mk('anthropic', '🟣', 'Claude (Anthropic)', TR('Comprensione al top. Gira nel browser — zero carico sul dispositivo.', 'Best understanding. Runs in your browser — zero load on the device.'), true),
           mk('openai', '⚡', 'Groq', TR('Veloce e con piano gratuito. OpenAI-compatibile (modelli Llama).', 'Fast & free tier. OpenAI-compatible (Llama models).'), false),
           mk('google', '✨', 'Gemini (Google)', TR('Forte, free tier generoso. Instradato dal proxy del device (niente CORS browser).', 'Strong, generous free tier. Routed via the device proxy (no browser CORS).'), false),
+          mk('custom', '🔧', TR('Personalizzato (OpenAI-compat.)', 'Custom (OpenAI-compatible)'), TR('Qualsiasi servizio o endpoint self-hosted HTTPS (OpenRouter, Together, …).', 'Any HTTPS third-party or self-hosted OpenAI-compatible API.'), false),
           mk('offline', '🧠', TR('Solo offline', 'Offline only'), TR('Nessuna chiave. ANIMA risponde comunque dal cervello on-device, meteo e Wikipedia.', 'No key. ANIMA still answers from its on-device brain, weather & Wikipedia.'), false))),
         footer({ back: true, next: state.provider !== 'offline', finish: state.provider === 'offline' }));
     }
@@ -579,28 +580,53 @@ function runWizard(acc = null, accountOnly = false) {
     // ---- step 3: API key -----------------------------------------------------
     function renderKey() {
       const p = AI.providerOf(state.provider);
-      if (!state.model || !p.models.some((m) => m[0] === state.model)) state.model = p.def;
+      const isCustom = state.provider === 'custom';
+      if (isCustom && !state.base) state.base = p.base;
+      if (!isCustom && (!state.model || !p.models.some((m) => m[0] === state.model))) state.model = p.def;
       const stat = h('div', { class: 'nob-stat' });
+      const baseInput = isCustom ? h('input', { class: 'nob-input', type: 'url', placeholder: 'https://api.example.com/v1', autocomplete: 'off', spellcheck: 'false', value: state.base || '' }) : null;
+      if (baseInput) baseInput.addEventListener('input', () => { state.base = baseInput.value.trim(); });
       const input = h('input', { class: 'nob-input', type: 'password', placeholder: p.ph, autocomplete: 'off', spellcheck: 'false' });
       const sel = h('select', { class: 'nob-select' });
-      for (const m of p.models) sel.append(h('option', { value: m[0], selected: m[0] === state.model }, AI.modelLabel(m)));
-      sel.addEventListener('change', () => { state.model = sel.value; });
+      const modelTxt = h('input', { class: 'nob-input', type: 'text', placeholder: TR('nome modello', 'model name'), autocomplete: 'off', spellcheck: 'false', value: state.model || '' });
+      modelTxt.addEventListener('input', () => { state.model = modelTxt.value.trim(); });
+      if (!isCustom) {
+        for (const m of p.models) sel.append(h('option', { value: m[0], selected: m[0] === state.model }, AI.modelLabel(m)));
+        sel.addEventListener('change', () => { state.model = sel.value; });
+      }
 
-      const cfg = () => ({ provider: state.provider, base: p.base, model: sel.value, key: input.value.trim(), version: p.version, exec: 'browser' });
+      const cfg = () => ({
+        provider: state.provider,
+        base: isCustom ? AI.normalizeApiBase(baseInput.value || state.base) : p.base,
+        model: isCustom ? (modelTxt.value.trim() || state.model) : sel.value,
+        key: input.value.trim(),
+        version: p.version,
+        exec: 'device',
+      });
       const setStat = (t, cls) => { stat.textContent = t; stat.className = 'nob-stat' + (cls ? ' ' + cls : ''); };
 
       const testBtn = h('button', { class: 'nob-btn', on: { click: async () => {
-        const k = input.value.trim(); if (!k) { setStat(TR('Incolla prima una chiave.', 'Paste a key first.'), 'err'); return; }
+        const c = cfg();
+        if (isCustom) {
+          if (!AI.isHttpsApiBase(c.base)) { setStat(TR('Inserisci una base HTTPS valida.', 'Enter a valid HTTPS base URL.'), 'err'); return; }
+          if (!c.model) { setStat(TR('Scrivi il nome del modello.', 'Enter the model name.'), 'err'); return; }
+        }
+        const k = c.key; if (!k) { setStat(TR('Incolla prima una chiave.', 'Paste a key first.'), 'err'); return; }
         setStat(TR('provo…', 'testing…')); testBtn.disabled = true;
-        try { const ok = await AI.cloudPing(cfg()); setStat(ok ? TR('✓ La chiave funziona!', '✓ Key works!') : TR('✗ Chiave rifiutata.', '✗ Key rejected.'), ok ? 'ok' : 'err'); }
+        try { const ok = await AI.cloudPing(c); setStat(ok ? TR('✓ La chiave funziona!', '✓ Key works!') : TR('✗ Chiave rifiutata.', '✗ Key rejected.'), ok ? 'ok' : 'err'); }
         catch (e) { setStat('✗ ' + String(e.message || e), 'err'); }
         finally { testBtn.disabled = false; }
       } } }, TR('⚡ Prova', '⚡ Test'));
 
       const saveBtn = h('button', { class: 'nob-btn pri', on: { click: async () => {
-        const k = input.value.trim();
+        const c = cfg();
+        const k = c.key;
+        if (isCustom) {
+          if (!AI.isHttpsApiBase(c.base)) { setStat(TR('Inserisci una base HTTPS valida.', 'Enter a valid HTTPS base URL.'), 'err'); return; }
+          if (!c.model) { setStat(TR('Scrivi il nome del modello.', 'Enter the model name.'), 'err'); return; }
+        }
         if (!k) { setStat(TR('Incolla la tua chiave.', 'Paste your key.'), 'err'); return; }
-        if (!p.prefix.test(k) && !confirm(TR('Non sembra una chiave ', 'That doesn’t look like a ') + p.label + TR('. Salvo lo stesso?', ' key. Save anyway?'))) return;
+        if (!isCustom && !p.prefix.test(k) && !confirm(TR('Non sembra una chiave ', 'That doesn’t look like a ') + p.label + TR('. Salvo lo stesso?', ' key. Save anyway?'))) return;
         setStat(TR('salvo…', 'saving…')); saveBtn.disabled = true;
         // On top of what the device already holds: the other providers' keys, the speech and vision
         // settings stay (a saved key comes back as a placeholder and is kept on the device).
@@ -625,7 +651,12 @@ function runWizard(acc = null, accountOnly = false) {
         else setStat(TR('Salvataggio fallito.', 'Save failed.'), 'err');
       } } }, TR('💾 Salva e finisci', '💾 Save & finish'));
 
-      const where = state.provider === 'anthropic'
+      const where = isCustom
+        ? [li(TR('Copia la base URL OpenAI-compatibile del tuo provider (es. https://openrouter.ai/api/v1).', 'Copy your provider’s OpenAI-compatible base URL (e.g. https://openrouter.ai/api/v1).')),
+           li(TR('Scrivi il nome del modello esattamente come lo espone l’API.', 'Enter the model name exactly as your API lists it.')),
+           li(TR('Incolla la chiave API del provider.', 'Paste your provider’s API key.')),
+           li(TR('AI Chat ha impostazioni separate: queste valgono per ANIMA e il resto del sistema.', 'AI Chat has separate settings — these apply to ANIMA and the rest of the system.'))]
+        : state.provider === 'anthropic'
         ? [li(TR('Vai su ', 'Go to '), h('a', { href: 'https://console.anthropic.com/settings/keys', target: '_blank', rel: 'noopener' }, 'console.anthropic.com')),
            li(TR('Apri API Keys → Create Key.', 'Open API Keys → Create Key.')),
            li(TR('Copia la chiave (inizia con sk-ant-) e incollala qui sotto.', 'Copy the key (starts with sk-ant-) and paste it below.'))]
@@ -638,17 +669,25 @@ function runWizard(acc = null, accountOnly = false) {
 
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); } });
 
+      const modelField = isCustom
+        ? [h('label', null, TR('Base URL / endpoint', 'Base URL / endpoint')), baseInput,
+           h('label', null, TR('Modello', 'Model')), modelTxt]
+        : [h('label', null, TR('Modello', 'Model')), sel];
+      const noteHtml = isCustom
+        ? TR('Salvata in teacher.json sul dispositivo: ANIMA, Copilot e le impostazioni IA la usano dopo un riavvio. Il dispositivo inoltra le chiamate HTTPS (niente CORS).',
+             'Stored in teacher.json on the device — ANIMA, Copilot and Settings use it after a reboot. The device relays HTTPS calls (no browser CORS).')
+        : TR('Salvata solo sul tuo dispositivo, mai nei log. Con Claude la chiave resta nel <b>tuo browser</b> e parla direttamente con Anthropic — il dispositivo non viene caricato.',
+             'Stored only on your device, never logged. With Claude the key stays in <b>your browser</b> and talks directly to Anthropic — the device isn’t loaded.');
+
       card.append(
-        header(TR('Collega ', 'Connect ') + p.label, TR('La chiave resta sul dispositivo', 'Your key stays on the device')),
+        header(TR('Collega ', 'Connect ') + (isCustom ? TR('endpoint personalizzato', 'custom endpoint') : p.label), TR('La chiave resta sul dispositivo', 'Your key stays on the device')),
         h('div', { class: 'nob-body' },
           h('ol', { class: 'nob-steps' }, ...where),
           h('div', { class: 'nob-field' },
-            h('label', null, TR('Modello', 'Model')), sel,
+            ...modelField,
             h('label', null, 'API key'), input,
             h('div', { class: 'nob-row' }, testBtn), stat),
-          h('div', { class: 'nob-note', html: '🔒 ' + TR(
-            'Salvata solo sul tuo dispositivo, mai nei log. Con Claude la chiave resta nel <b>tuo browser</b> e parla direttamente con Anthropic — il dispositivo non viene caricato.',
-            'Stored only on your device, never logged. With Claude the key stays in <b>your browser</b> and talks directly to Anthropic — the device isn’t loaded.') })),
+          h('div', { class: 'nob-note', html: '🔒 ' + noteHtml })),
         footer({ back: true, saveSlot: saveBtn }));
     }
 

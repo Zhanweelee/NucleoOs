@@ -46,6 +46,9 @@ const STR = {
     listed: (n) => n + ' modelli disponibili', nolist: 'Il server non ha restituito modelli', typemodel: 'nome del modello (es. llama3.2)',
     localok: (n, m) => '✓ Server raggiungibile — ' + n + ' modelli' + (m ? ' · prova ' + m + ' ok' : ''),
     needbase: 'Inserisci l’indirizzo del server (http://<pc>:<porta>/v1).', needmodel: 'Scegli o scrivi il modello.',
+    needcustombase: 'Inserisci una base API HTTPS valida (https://host/.../v1). Per un server in LAN usa Server locale.',
+    customph: 'https://api.example.com/v1',
+    customnote: 'L’IA di sistema (ANIMA, Copilot, Impostazioni) usa questo endpoint sul dispositivo. <b>AI Chat</b> ha endpoint e chiave propri nell’app, salvo impostarli uguali.',
     localnote: 'Server locale: il dispositivo fa da ponte (il browser non può parlare direttamente con Ollama). La chiave serve solo se il server la richiede. Su Ollama, sul PC: OLLAMA_HOST=0.0.0.0 ollama serve.',
     netmode: 'Modalità', nets: [['offline', 'Offline', 'Solo il dispositivo, niente rete'], ['local', 'Locale', 'Dispositivo + server LLM nella tua rete, niente internet'],
            ['hybrid', 'Ibrida', 'Dispositivo, poi Wikipedia, poi il modello'], ['llm', 'LLM', 'Prima il modello, il dispositivo come riserva']],
@@ -99,6 +102,9 @@ const STR = {
     listed: (n) => n + ' models available', nolist: 'The server returned no models', typemodel: 'model name (e.g. llama3.2)',
     localok: (n, m) => '✓ Server reachable — ' + n + ' models' + (m ? ' · ' + m + ' answered' : ''),
     needbase: 'Enter the server address (http://<pc>:<port>/v1).', needmodel: 'Pick or type the model.',
+    needcustombase: 'Enter a valid HTTPS API base (https://host/.../v1). For a home LAN server, use Local server instead.',
+    customph: 'https://api.example.com/v1',
+    customnote: 'System AI (ANIMA, Copilot, Settings) uses this endpoint on the device. <b>AI Chat</b> keeps its own endpoint and key in the app unless you set the same values there.',
     localnote: 'Local server: the device bridges it (a browser cannot talk to Ollama directly). A key only if the server wants one. For Ollama, on the PC: OLLAMA_HOST=0.0.0.0 ollama serve.',
     netmode: 'Mode', nets: [['offline', 'Offline', 'The device only, no network'], ['local', 'Local', 'Device + an LLM server on your network, no internet'],
            ['hybrid', 'Hybrid', 'Device, then Wikipedia, then the model'], ['llm', 'LLM', 'The model first, the device as fallback']],
@@ -152,6 +158,9 @@ const STR = {
     listed: (n) => n + ' modelos disponibles', nolist: 'El servidor no devolvió ningún modelo', typemodel: 'nombre del modelo (p. ej. llama3.2)',
     localok: (n, m) => '✓ Servidor accesible — ' + n + ' modelos' + (m ? ' · ' + m + ' respondió' : ''),
     needbase: 'Introduce la dirección del servidor (http://<pc>:<puerto>/v1).', needmodel: 'Elige o escribe el modelo.',
+    needcustombase: 'Introduce una base API HTTPS válida (https://host/.../v1). Para un servidor en la LAN usa Servidor local.',
+    customph: 'https://api.example.com/v1',
+    customnote: 'La IA del sistema (ANIMA, Copilot, Ajustes) usa este endpoint en el dispositivo. <b>AI Chat</b> guarda su propio endpoint y clave en la app salvo que pongas los mismos aquí.',
     localnote: 'Servidor local: el dispositivo hace de puente (un navegador no puede hablar directamente con Ollama). La clave solo si el servidor la pide. Con Ollama, en el PC: OLLAMA_HOST=0.0.0.0 ollama serve.',
     netmode: 'Modo', nets: [['offline', 'Sin red', 'Solo el dispositivo, sin red'], ['local', 'Local', 'Dispositivo + un servidor LLM en tu red, sin internet'],
            ['hybrid', 'Híbrido', 'Dispositivo, luego Wikipedia, luego el modelo'], ['llm', 'LLM', 'Primero el modelo, el dispositivo como respaldo']],
@@ -205,6 +214,9 @@ const STR = {
     listed: (n) => n + ' modèles disponibles', nolist: 'Le serveur n’a renvoyé aucun modèle', typemodel: 'nom du modèle (ex. llama3.2)',
     localok: (n, m) => '✓ Serveur joignable — ' + n + ' modèles' + (m ? ' · ' + m + ' a répondu' : ''),
     needbase: 'Saisissez l’adresse du serveur (http://<pc>:<port>/v1).', needmodel: 'Choisissez ou saisissez le modèle.',
+    needcustombase: 'Saisissez une base API HTTPS valide (https://host/.../v1). Pour un serveur LAN, utilisez Serveur local.',
+    customph: 'https://api.example.com/v1',
+    customnote: 'L’IA système (ANIMA, Copilot, Réglages) utilise ce point de terminaison sur l’appareil. <b>AI Chat</b> garde le sien dans l’app sauf si vous mettez les mêmes valeurs ici.',
     localnote: 'Serveur local : l’appareil sert de pont (un navigateur ne peut pas parler directement à Ollama). Une clé seulement si le serveur en demande une. Pour Ollama, sur le PC : OLLAMA_HOST=0.0.0.0 ollama serve.',
     netmode: 'Mode', nets: [['offline', 'Hors ligne', 'L’appareil seul, sans réseau'], ['local', 'Local', 'Appareil + un serveur LLM sur votre réseau, sans internet'],
            ['hybrid', 'Hybride', 'L’appareil, puis Wikipédia, puis le modèle'], ['llm', 'LLM', 'Le modèle d’abord, l’appareil en secours']],
@@ -258,6 +270,9 @@ const STR = {
     listed: (n) => n + ' Modelle verfügbar', nolist: 'Der Server hat keine Modelle geliefert', typemodel: 'Modellname (z. B. llama3.2)',
     localok: (n, m) => '✓ Server erreichbar — ' + n + ' Modelle' + (m ? ' · ' + m + ' hat geantwortet' : ''),
     needbase: 'Gib die Serveradresse ein (http://<pc>:<port>/v1).', needmodel: 'Wähle oder tippe das Modell.',
+    needcustombase: 'Gib eine gültige HTTPS-API-Basis ein (https://host/.../v1). Für LAN-Server „Lokaler Server“ nutzen.',
+    customph: 'https://api.example.com/v1',
+    customnote: 'System-KI (ANIMA, Copilot, Einstellungen) nutzt diesen Endpunkt auf dem Gerät. <b>AI Chat</b> hat einen eigenen Endpunkt/Schlüssel in der App, sofern du nicht dieselben Werte setzt.',
     localnote: 'Lokaler Server: das Gerät dient als Brücke (ein Browser kann nicht direkt mit Ollama sprechen). Ein Schlüssel nur, wenn der Server einen verlangt. Für Ollama auf dem PC: OLLAMA_HOST=0.0.0.0 ollama serve.',
     netmode: 'Modus', nets: [['offline', 'Offline', 'Nur das Gerät, kein Netz'], ['local', 'Lokal', 'Gerät + ein LLM-Server in deinem Netz, kein Internet'],
            ['hybrid', 'Hybrid', 'Gerät, dann Wikipedia, dann das Modell'], ['llm', 'LLM', 'Zuerst das Modell, das Gerät als Reserve']],
@@ -311,6 +326,9 @@ const STR = {
     listed: (n) => n + ' 个可用模型', nolist: '服务器没有返回任何模型', typemodel: '模型名称（例如 llama3.2）',
     localok: (n, m) => '✓ 服务器可访问——' + n + ' 个模型' + (m ? ' · ' + m + ' 已应答' : ''),
     needbase: '请输入服务器地址（http://<pc>:<port>/v1）。', needmodel: '请选择或输入模型。',
+    needcustombase: '请输入有效的 HTTPS API 基址（https://host/.../v1）。家庭局域网服务器请使用「本地服务器」。',
+    customph: 'https://api.example.com/v1',
+    customnote: '系统 AI（ANIMA、Copilot、设置）在设备上使用此端点。<b>AI Chat</b> 在应用内保留独立的端点和密钥，除非你在这里填写相同配置。',
     localnote: '本地服务器：由设备中转（浏览器无法直接与 Ollama 通信）。只有服务器要求时才需要密钥。使用 Ollama 时，在电脑上运行：OLLAMA_HOST=0.0.0.0 ollama serve。',
     netmode: '模式', nets: [['offline', '离线', '仅使用设备，不联网'], ['local', '本地', '设备 + 你网络中的 LLM 服务器，不连接互联网'],
            ['hybrid', '混合', '先用设备，再查维基百科，最后用模型'], ['llm', 'LLM', '先用模型，设备作为备用']],
@@ -459,6 +477,7 @@ export function mountKeyManager(container, opts = {}) {
     `<div class="nkm-row" data-el="effrow" style="display:none"><label>${esc(AI.effortLabel('label', lang))}</label><span class="nkm-seg" role="group" aria-label="${esc(AI.effortLabel('label', lang))}" data-el="eff"></span></div>` +
     `<div class="nkm-exechint" data-el="effhint" style="display:none">${esc(t().effhint)}</div>` +
     `<div class="nkm-note" data-el="localnote" style="display:none">${esc(t().localnote)}</div>` +
+    `<div class="nkm-note" data-el="customnote" style="display:none">${esc(t().customnote)}</div>` +
     (showExec ? `<div class="nkm-row"><label>${esc(t().exec)}</label><span class="nkm-seg" data-el="exec"><span class="it" data-x="browser">${esc(t().browser)}</span><span class="it" data-x="device">${esc(t().device)}</span></span></div>` : '') +
     (showExec ? `<div class="nkm-exechint" data-el="exechint"></div>` : '') +
     `<div class="nkm-row"><label>${esc(t().key)}</label><input data-el="key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…"></div>` +
@@ -504,11 +523,14 @@ export function mountKeyManager(container, opts = {}) {
   const $ = (n) => root.querySelector(`[data-el="${n}"]`);
 
   const setStat = (html) => { $('stat').innerHTML = html; };
-  const statText = () => (prov().local && cfg.base && cfg.model)
-    ? `${t().active} <b>${esc(cfg.base)}</b> · ${esc(prov().label)} · ${esc(cfg.model)}`
-    : cfg.key
-    ? `${t().active} <b>${esc(AI.maskKey(cfg.key, cfg.keyHint))}</b> · ${esc(prov().label)} · ${esc(cfg.model)}`
-    : t().nokey;
+  const statText = () => {
+    if ((prov().local || prov().custom) && cfg.base && cfg.model) {
+      return `${t().active} <b>${esc(cfg.base)}</b> · ${esc(prov().label)} · ${esc(cfg.model)}`;
+    }
+    return cfg.key
+      ? `${t().active} <b>${esc(AI.maskKey(cfg.key, cfg.keyHint))}</b> · ${esc(prov().label)} · ${esc(cfg.model)}`
+      : t().nokey;
+  };
 
   function fillChips() {
     // The LAN-server provider (non-enumerable in AI.PROVIDERS) only where the device relay can reach plain-http LAN
@@ -546,15 +568,24 @@ export function mountKeyManager(container, opts = {}) {
       if ($('tier')) $('tier').textContent = AI.geminiTierLabel(cfg.geminiTier, lang);
     }
     if (showExec && $('exec')) {
-      // a LAN server is always reached through the device relay: "browser / device" means nothing there
-      $('exec').closest('.nkm-row').style.display = prov().local ? 'none' : '';
-      if ($('exechint')) $('exechint').style.display = prov().local ? 'none' : '';
+      // a LAN/custom endpoint is reached through the device relay: browser/device toggle is hidden there
+      const hideExec = prov().local || prov().custom;
+      $('exec').closest('.nkm-row').style.display = hideExec ? 'none' : '';
+      if ($('exechint')) $('exechint').style.display = hideExec ? 'none' : '';
       $('exec').querySelectorAll('.it').forEach((b) => b.classList.toggle('on', b.dataset.x === (cfg.exec || 'browser')));
       if ($('exechint')) $('exechint').textContent = (cfg.exec === 'device') ? t().execDevice : t().execBrowser;
     }
     const local = !!p.local;
-    if ($('baserow')) { $('baserow').style.display = local ? '' : 'none'; if (local && document.activeElement !== $('base')) $('base').value = cfg.base || ''; }
+    const custom = !!p.custom;
+    if ($('baserow')) {
+      $('baserow').style.display = (local || custom) ? '' : 'none';
+      if ((local || custom) && document.activeElement !== $('base')) {
+        $('base').value = cfg.base || '';
+        $('base').placeholder = custom ? t().customph : t().needbase.split('(')[0].trim();
+      }
+    }
     if ($('localnote')) $('localnote').style.display = local ? '' : 'none';
+    if ($('customnote')) $('customnote').style.display = custom ? '' : 'none';
     if ($('presets') && local && !$('presets').childElementCount) {
       $('presets').innerHTML = (p.presets || []).map(([n, port]) => `<button type="button" class="nkm-btn" data-port="${port}">${esc(n)}</button>`).join('');
       $('presets').querySelectorAll('[data-port]').forEach((b) => b.addEventListener('click', () => {
@@ -607,7 +638,7 @@ export function mountKeyManager(container, opts = {}) {
     if ($('stt')) { $('stt').value = cfg.stt_url; $('sttstat').textContent = cfg.stt_url ? t().sttok : t().sttoff; }
     if ($('vismodel')) { $('vismodel').value = cfg.vision_model; $('visstat').textContent = cfg.vision_model ? t().visok : t().visoff; }
     if (cfg.key) cfg.keys[cfg.provider] = Object.assign({}, cfg.keys[cfg.provider] || {}, { base: cfg.base, model: cfg.model, key: cfg.key, keyHint: cfg.keyHint }, cfg.provider === 'anthropic' ? { version: cfg.version } : {}, cfg.effort ? { effort: cfg.effort } : {});
-    paint(); setStat((cfg.key || (prov().local && cfg.base)) ? statText() : t().noset);
+    paint(); setStat((cfg.key || ((prov().local || prov().custom) && cfg.base && cfg.model)) ? statText() : t().noset);
     onChange(getCfg());
   }
 
@@ -634,6 +665,13 @@ export function mountKeyManager(container, opts = {}) {
       cfg.model = pickedModel();
       if (!cfg.model) { setStat(t().needmodel); return; }
       if (v) cfg.key = v;
+    } else if (p.custom) {
+      cfg.base = AI.normalizeApiBase($('base').value);
+      if (!AI.isHttpsApiBase(cfg.base)) { setStat(t().needcustombase); return; }
+      cfg.model = pickedModel();
+      if (!cfg.model) { setStat(t().needmodel); return; }
+      if (!v) { setStat(t().typefirst); return; }
+      cfg.key = v;
     } else {
       // No key typed: a model / effort change keeps the key already saved for this provider (on a sealed vault that
       // is the VAULT_KEY placeholder, written back as "" so the device keeps the real one).
@@ -671,9 +709,14 @@ export function mountKeyManager(container, opts = {}) {
 
   async function refreshModels() {
     const p = prov();
-    const c = { provider: cfg.provider, base: p.local ? ($('base').value || '').trim() : (cfg.base || p.base), key: $('key').value.trim() || cfg.key, version: cfg.version || p.version };
+    const base = p.local ? ($('base').value || '').trim()
+      : p.custom ? AI.normalizeApiBase($('base').value || cfg.base)
+      : (cfg.base || p.base);
+    const c = { provider: cfg.provider, base, key: $('key').value.trim() || cfg.key, version: cfg.version || p.version };
     if (p.local && !AI.isLanUrl(c.base)) { setStat(t().needbase); return null; }
-    if (!p.local && !c.key) { setStat(t().typeortest); return null; }
+    if (p.custom && !AI.isHttpsApiBase(c.base)) { setStat(t().needcustombase); return null; }
+    if (!p.local && !p.custom && !c.key) { setStat(t().typeortest); return null; }
+    if (p.custom && !c.key) { setStat(t().typeortest); return null; }
     setStat(t().listing);
     // ai.js listModels: the served ids (fresh, so a just-started server is asked again), or null when it can't be asked.
     const ids = await AI.listModels(c, { fresh: true });
@@ -691,8 +734,19 @@ export function mountKeyManager(container, opts = {}) {
   }
 
   async function test() {
-    if (prov().local) {
+    if (prov().local || prov().custom) {
       const list = await refreshModels();
+      if (!list && prov().custom) {
+        const model = pickedModel();
+        const k = $('key').value.trim() || cfg.key;
+        if (!AI.isHttpsApiBase(AI.normalizeApiBase($('base').value || cfg.base)) || !model || !k) return;
+        setStat(t().testing);
+        try {
+          const ok = await AI.cloudPing({ provider: cfg.provider, base: AI.normalizeApiBase($('base').value || cfg.base), model, key: k });
+          setStat(ok ? (t().works + esc(model)) : t().rejected);
+        } catch (e) { setStat('✗ ' + esc(String(e.message || e))); }
+        return;
+      }
       if (!list) return;
       const model = pickedModel();
       if (!model) { setStat(t().listed(list.length)); return; }
