@@ -1,0 +1,22 @@
+{
+  "name": "nucleo-cli",
+  "version": "0.1.0",
+  "description": "User-facing CLI for NucleoOS device file management and transfers over /api/fs.",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "nucleo": "./nucleo.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "nucleo.mjs",
+    "lib",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test *.test.mjs"
+  }
+}

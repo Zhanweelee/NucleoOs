@@ -108,6 +108,7 @@ ANIMA is NucleoOS's offline natural-language assistant (retrieval + reasoning in
 | [debugging.md](debugging.md) | The default host-first dev loop — compile the real firmware C and run it on the PC; flash only to confirm. |
 | [testing.md](testing.md) | The verification system — one test registry feeding the gate, CLI and GUI; ANIMA's NL suites. |
 | [releasing.md](releasing.md) | The two independent release layers (firmware vs web/SD) and the OTA / SD-sync channels for each. |
+| [nucleo-cli.md](nucleo-cli.md) | The standalone `nucleo` CLI — pair once, then list/upload/download/manage files over `/api/fs`. |
 | [release-signing.md](release-signing.md) | Offline signing of firmware and SD content with the release key; the device refuses what does not verify. |
 | [versioning.md](versioning.md) | The single-source-of-truth firmware version string, auto-incremented and reported identically everywhere. |
 

@@ -78,6 +78,7 @@
     "test:list": "node tools/run-tests.mjs --list",
     "test:lab": "python tools/test-lab/test_lab.py",
     "push-ota": "node tools/push-ota.mjs",
+    "nucleo": "node tools/nucleo-cli/nucleo.mjs",
     "anima": "node tools/anima-host/anima.mjs",
     "anima:build": "node tools/anima-host/anima.mjs --build",
     "assets": "node oversized-assets/rejoin.mjs",
